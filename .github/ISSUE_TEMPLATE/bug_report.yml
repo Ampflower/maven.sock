@@ -1,0 +1,52 @@
+name: Bug report
+description: Create a bug report to help us improve.
+labels: [ 'bug' ]
+
+body:
+  - type: textarea
+    attributes:
+      label: Environment
+      description: |
+        What platform and version of Java are you using?
+
+        Example:
+          - **Operating System**: Debian 11
+          - **Java**: Eclipse Temurin 17.0.1
+      value: |
+        - **Operating System**:
+        - **Java**:
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: To reproduce
+      description: Steps to reproduce the behaviour.
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Expected results
+      description: What behaviour did you expect?
+      placeholder: e.g. To be wither immune.
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Actual results
+      description: What behaviour did you observe instead?
+      placeholder: e.g. The wither destroyed it.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Anything else?
+      description: Crash reports, server logs, screenshots and videos should go here.
+    validations:
+      required: false
