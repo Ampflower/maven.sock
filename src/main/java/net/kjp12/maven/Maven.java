@@ -192,15 +192,6 @@ public class Maven extends AbstractHandler {
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
 			throws IOException {
 		boolean taint = "http".equals(request.getHeader("X-Forwarded-Proto"));
-		System.out.println("New request for " + target);
-		for (var headers = request.getHeaderNames(); headers.hasMoreElements();) {
-			var header = headers.nextElement();
-			// Ignore Authorization as we shouldn't log that at all.
-			for (var headerValues = request.getHeaders(header); headerValues.hasMoreElements();) {
-				System.out.printf("%s: %s\n", header, headerValues.nextElement());
-			}
-		}
-		System.out.flush();
 		// No point in executing on any other.
 		baseRequest.setHandled(true);
 		if (!"PUT".equalsIgnoreCase(request.getMethod())) {
