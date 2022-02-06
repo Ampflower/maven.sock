@@ -27,10 +27,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.security.SecureRandom;
-import java.util.Base64;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -108,6 +105,8 @@ public class Maven extends AbstractHandler {
 					int i = s.indexOf(':');
 					return i == -1 ? Map.entry(s, "") : Map.entry(s.substring(0, i), s.substring(i + 1));
 				}).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+			} else {
+				$users = new HashMap<>();
 			}
 		} catch (Exception ioe) {
 			throw new ExceptionInInitializerError(ioe);
@@ -126,9 +125,11 @@ public class Maven extends AbstractHandler {
 		// which cannot be inputted into CLI Argon2.
 		if (args.length > 0) {
 			var console = System.console();
-			console.printf(
-					"Please input each password for the following %d users.\nIt is normal for your input to not echo back.",
-					args.length);
+			console.printf("""
+					Please input each password for the following %d users.
+					It is normal for your input to not echo back.
+
+					""", args.length);
 			for (var str : args) {
 				if (str.indexOf(':') >= 0) {
 					// Usernames cannot `:` as that's the separator for basic authentication.
@@ -254,7 +255,8 @@ public class Maven extends AbstractHandler {
 		Arrays.clear(rawAuthorization);
 		Arrays.clear(password);
 		var path = maven.resolve('.' + target);
-		if (Files.exists(path) && !target.contains("SNAPSHOT")) {
+		if (Files.exists(path) && !target.contains("SNAPSHOT")
+				&& !target.regionMatches(target.lastIndexOf('/') + 1, "maven-metadata", 0, 14)) {
 			response.setStatus(HttpServletResponse.SC_CONFLICT);
 			response.getWriter().println("File cannot be replaced or deleted once uploaded.");
 			return;
