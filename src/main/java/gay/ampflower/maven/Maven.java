@@ -23,6 +23,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -260,15 +261,14 @@ public class Maven extends AbstractHandler {
 			return;
 		}
 		var parent = path.getParent();
-		if (Files.exists(path) && !Files.isDirectory(path)) {
+		if (Files.exists(parent) && !Files.isDirectory(parent)) {
 			response.setStatus(HttpServletResponse.SC_CONFLICT);
 			response.getWriter().println("Package is a file.");
 			return;
 		}
 		Files.createDirectories(parent);
-		try (var pathOut = Files.newOutputStream(path, StandardOpenOption.CREATE_NEW);
-				var srvIn = request.getInputStream()) {
-			srvIn.transferTo(pathOut);
+		try (var srvIn = request.getInputStream()) {
+			Files.copy(srvIn, path, StandardCopyOption.REPLACE_EXISTING);
 		}
 		response.setStatus(HttpServletResponse.SC_CREATED);
 	}
