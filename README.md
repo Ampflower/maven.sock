@@ -25,8 +25,8 @@ A small Maven upload backend over a UNIX socket, meant for use with reverse prox
 5. Setup the environment. You can set the environment variables `maven` and `unix_socket`.
     - An example configuration is to use `maven=/var/www/maven` and `unix_socket=/run/maven.sock`.
 6. Setup the reverse proxy/webserver.
-    - Note that this server only supports `PUT`. Anything else will return 501 Not Implemented, even on `GET` and `HEAD`
-      .
+    - Note that this server only supports `PUT`. Anything else will return 501 Not Implemented, even on `GET` and
+      `HEAD`.
     - For Caddy, an example configuration is to use...
       ```caddyfile
       # /etc/caddy/Caddyfile
