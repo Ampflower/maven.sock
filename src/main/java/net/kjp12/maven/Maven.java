@@ -137,12 +137,17 @@ public class Maven extends AbstractHandler {
 					console.printf("Username %s is invalid, must *NOT* contain `:`\n", str);
 					continue;
 				}
-				var passwd = CharBuffer.wrap(console.readPassword("%s>", str));
-				var passby = StandardCharsets.UTF_8.encode(passwd);
-				Arrays.fill(passwd.array(), '\u0000');
-				var hash = Argon2.generate(passby.array(), secret);
-				if (!Argon2.verify(hash, passby.array(), secret))
+				var passIn = CharBuffer.wrap(console.readPassword("%s>", str));
+				var passBuf = StandardCharsets.UTF_8.encode(passIn);
+				var passRaw = new byte[passBuf.limit() - passBuf.position()];
+				passBuf.get(passRaw);
+				var hash = Argon2.generate(passRaw, secret);
+				if (!Argon2.verify(hash, passRaw, secret)) {
 					throw new AssertionError();
+				}
+				Arrays.fill(passIn.array(), '\u0000');
+				Arrays.fill(passBuf.array(), (byte) 0);
+				Arrays.fill(passRaw, (byte) 0);
 				users.put(str, hash);
 			}
 			var sb = new StringBuilder();
@@ -186,19 +191,11 @@ public class Maven extends AbstractHandler {
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
 			throws IOException {
-		// TODO: Implement an invalidator for when the password is exposed as plain
-		// text.
-		// We are a bit blind being a unix socket however, so, it's not as easy to
-		// determine
-		// if the request was made as HTTP, as a header is required to tell us.
-		// For now, we'll log each request to try to determine what was made as an HTTP
-		// vs. HTTPS request later.
+		boolean taint = "http".equals(request.getHeader("X-Forwarded-Proto"));
 		System.out.println("New request for " + target);
 		for (var headers = request.getHeaderNames(); headers.hasMoreElements();) {
 			var header = headers.nextElement();
 			// Ignore Authorization as we shouldn't log that at all.
-			if ("Authorization".equalsIgnoreCase(header))
-				continue;
 			for (var headerValues = request.getHeaders(header); headerValues.hasMoreElements();) {
 				System.out.printf("%s: %s\n", header, headerValues.nextElement());
 			}
@@ -228,6 +225,7 @@ public class Maven extends AbstractHandler {
 		var authorization = request.getHeader("Authorization");
 		if (authorization == null || !authorization.startsWith("Basic ") || checkObject(authorization)) {
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.getWriter().println("Unacceptable Authorization Method");
 			return;
 		}
 		// A MIME decoder can decode regular and URL base64.
@@ -241,6 +239,8 @@ public class Maven extends AbstractHandler {
 		var hash = users.get(username);
 		if (hash == null) {
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.getWriter().println("No such user.");
+			System.err.printf("%s not in %s\n", username, users.keySet());
 			Arrays.clear(rawAuthorization);
 			return;
 		}
@@ -250,10 +250,17 @@ public class Maven extends AbstractHandler {
 			Arrays.clear(rawAuthorization);
 			Arrays.clear(password);
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.getWriter().println("Password mismatch.");
 			return;
 		}
 		Arrays.clear(rawAuthorization);
 		Arrays.clear(password);
+		if (taint) {
+			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			response.getWriter().println("Use HTTPS next time. Password invalidated, contact sysadmin.");
+			users.remove(username);
+			return;
+		}
 		var path = maven.resolve('.' + target);
 		if (Files.exists(path) && !target.contains("SNAPSHOT")
 				&& !target.regionMatches(target.lastIndexOf('/') + 1, "maven-metadata", 0, 14)) {
