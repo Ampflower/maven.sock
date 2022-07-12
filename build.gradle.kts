@@ -7,18 +7,9 @@
 plugins {
     java
     application
-    id("com.github.johnrengelman.shadow")
-    id("com.diffplug.spotless")
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.spotless)
 }
-
-val projectVersion: String by project
-val bouncyCastleVersion: String by project
-val logbackVersion: String by project
-val jettyVersion: String by project
-val junitVersion: String by project
-
-group = "gay.ampflower"
-version = projectVersion
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -34,12 +25,11 @@ repositories {
 }
 
 dependencies {
-    implementation("org.bouncycastle", "bcprov-jdk15on", bouncyCastleVersion)
-    implementation("org.eclipse.jetty", "jetty-server", jettyVersion)
-    implementation("org.eclipse.jetty", "jetty-unixsocket-server", jettyVersion)
-    implementation("ch.qos.logback", "logback-classic", logbackVersion)
-    testImplementation("org.junit.jupiter", "junit-jupiter-api", junitVersion)
-    testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", junitVersion)
+    implementation(libs.bouncyCastle)
+    implementation(libs.bundles.jetty)
+    implementation(libs.bundles.logger)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
 spotless {

@@ -5,13 +5,3 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 rootProject.name = "maven.sock"
-
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-    }
-    plugins {
-        id("com.diffplug.spotless") version System.getProperty("spotlessVersion")!!
-        id("com.github.johnrengelman.shadow") version System.getProperty("shadowVersion")!!
-    }
-}

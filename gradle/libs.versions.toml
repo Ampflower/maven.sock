@@ -1,0 +1,31 @@
+[versions]
+junit="5.8.2"
+bouncyCastle="1.71"
+logback="1.3.0-alpha16"
+slf4j="2.0.0-alpha7"
+jetty="11.0.11"
+spotless="6.8.0"
+shadow="7.1.2"
+
+[libraries]
+bouncyCastle = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncyCastle" }
+
+# Logger
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+
+# Jetty
+jetty_server = { module = "org.eclipse.jetty:jetty-server", version.ref = "jetty" }
+jetty_unixsocket_server = { module = "org.eclipse.jetty:jetty-unixsocket-server", version.ref = "jetty" }
+
+# JUnit
+junit_jupiter_api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
+junit_jupiter_engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+
+[bundles]
+jetty = ["jetty_server", "jetty_unixsocket_server"]
+logger = ["logback", "slf4j"]
+
+[plugins]
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
