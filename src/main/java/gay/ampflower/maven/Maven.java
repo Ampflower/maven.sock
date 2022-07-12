@@ -12,7 +12,7 @@ import org.bouncycastle.util.Arrays;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
-import org.eclipse.jetty.unixsocket.server.UnixSocketConnector;
+import org.eclipse.jetty.unixdomain.server.UnixDomainServerConnector;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -170,8 +170,9 @@ public class Maven extends AbstractHandler {
 
 		var server = new Server();
 		{
-			var connector = new UnixSocketConnector(server);
-			connector.setUnixSocket(Objects.requireNonNullElse(System.getenv("unix_socket"), "./maven.sock"));
+			var connector = new UnixDomainServerConnector(server);
+			connector.setUnixDomainPath(
+					Path.of(Objects.requireNonNullElse(System.getenv("unix_socket"), "./maven.sock")));
 			server.addConnector(connector);
 		}
 

@@ -16,14 +16,14 @@ slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 
 # Jetty
 jetty_server = { module = "org.eclipse.jetty:jetty-server", version.ref = "jetty" }
-jetty_unixsocket_server = { module = "org.eclipse.jetty:jetty-unixsocket-server", version.ref = "jetty" }
+jetty_unixdomain_server = { module = "org.eclipse.jetty:jetty-unixdomain-server", version.ref = "jetty" }
 
 # JUnit
 junit_jupiter_api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 junit_jupiter_engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
 
 [bundles]
-jetty = ["jetty_server", "jetty_unixsocket_server"]
+jetty = ["jetty_server", "jetty_unixdomain_server"]
 logger = ["logback", "slf4j"]
 
 [plugins]
