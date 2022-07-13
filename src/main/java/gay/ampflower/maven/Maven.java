@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 /**
  * Tiny maven upload backend over a unix socket.
  * <p>
- * Use by a reverse proxy like Caddy.
+ * Use behind a reverse proxy like Caddy.
  *
  * @author Ampflower
  * @since ${version}
@@ -56,14 +56,18 @@ public class Maven extends AbstractHandler {
 	 */
 	public static final Path maven = Path.of(Objects.requireNonNullElse(System.getenv("maven"), "./maven/"));
 	/**
-	 * Nonce-reading for hashing purposes.
+	 * Allows for reading nonce for hashing purposes.
 	 */
 	private static final VarHandle BYTES_AS_INT = MethodHandles.byteArrayViewVarHandle(int[].class,
 			ByteOrder.nativeOrder());
 	/**
-	 * Nonce for current session & secret for password hashing
+	 * Nonce for current session.
 	 */
-	private static final byte[] nonce = new byte[nonceLength], secret;
+	private static final byte[] nonce = new byte[nonceLength];
+	/**
+	 * Secret for password hashing with Argon2.
+	 */
+	private static final byte[] secret;
 	/**
 	 * Username -> Password Hash map
 	 */
