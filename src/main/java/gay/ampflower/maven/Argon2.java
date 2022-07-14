@@ -37,13 +37,18 @@ public class Argon2 {
 	 *                 instance.
 	 * @return The Argon2-compliant output string containing the parameters used,
 	 *         the salt and the resulting hash.
+	 * @throws AssertionError When encoded password fails internal sanity check.
 	 */
 	public static String generate(byte[] password, byte[] secret) {
 		byte[] salt = new byte[8], output = new byte[32];
 		random.nextBytes(salt);
 		var params = initArgon2id(secret, salt);
 		execute(params, password, output);
-		return encode(params, output);
+		var encoded = encode(params, output);
+		if (!verify(encoded, password, secret)) {
+			throw new AssertionError("Encoded password failed self-verification.");
+		}
+		return encoded;
 	}
 
 	/**

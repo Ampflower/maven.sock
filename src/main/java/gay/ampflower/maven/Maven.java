@@ -147,9 +147,6 @@ public class Maven extends AbstractHandler {
 				var passRaw = new byte[passBuf.limit() - passBuf.position()];
 				passBuf.get(passRaw);
 				var hash = Argon2.generate(passRaw, secret);
-				if (!Argon2.verify(hash, passRaw, secret)) {
-					throw new AssertionError();
-				}
 				Arrays.fill(passIn.array(), '\u0000');
 				Arrays.fill(passBuf.array(), (byte) 0);
 				Arrays.fill(passRaw, (byte) 0);
