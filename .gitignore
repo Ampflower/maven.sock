@@ -4,6 +4,7 @@ out/
 .idea/
 build/
 /maven/
-.secret
-.users
+.secret*
+.users*
 maven.sock
+config.ini

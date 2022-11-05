@@ -10,23 +10,15 @@ import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
 import org.bouncycastle.crypto.params.Argon2Parameters;
 import org.bouncycastle.util.Arrays;
 
-import java.security.SecureRandom;
-import java.util.concurrent.Callable;
-
-import static gay.ampflower.maven.Maven.DECODER;
-import static gay.ampflower.maven.Maven.ENCODER;
+import static gay.ampflower.maven.Utils.*;
 
 /**
  * Argon2 wrapper around Bouncy Castle's implementation.
  *
  * @author Ampflower
- * @since ${version}
+ * @since 0.0.0
  **/
-public class Argon2 {
-	/**
-	 * SecureRandom instance for generating strong salts.
-	 */
-	private static final SecureRandom random = tryOrDie(SecureRandom::getInstanceStrong);
+public final class Argon2 {
 
 	/**
 	 * Generates a new password hash by using a strong Argon2id instance with the
@@ -41,7 +33,7 @@ public class Argon2 {
 	 */
 	public static String generate(byte[] password, byte[] secret) {
 		byte[] salt = new byte[8], output = new byte[32];
-		random.nextBytes(salt);
+		getStrongRandom().nextBytes(salt);
 		var params = initArgon2id(secret, salt);
 		execute(params, password, output);
 		var encoded = encode(params, output);
@@ -168,13 +160,5 @@ public class Argon2 {
 		builder.withSalt(salt);
 		Arrays.clear(salt);
 		return builder.build();
-	}
-
-	private static <T> T tryOrDie(Callable<T> callable) {
-		try {
-			return callable.call();
-		} catch (Exception exception) {
-			throw new ExceptionInInitializerError(exception);
-		}
 	}
 }

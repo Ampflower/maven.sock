@@ -22,10 +22,17 @@ application {
 
 repositories {
     mavenCentral()
+    maven("Mojang") {
+        url = uri("https://libraries.minecraft.net")
+        content {
+            includeGroup("com.mojang")
+        }
+    }
 }
 
 dependencies {
     implementation(libs.bouncyCastle)
+    implementation(libs.brigadier)
     implementation(libs.bundles.jetty)
     implementation(libs.bundles.logger)
     testImplementation(libs.junit.jupiter.api)

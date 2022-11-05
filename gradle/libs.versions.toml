@@ -6,9 +6,11 @@ slf4j="2.0.0-alpha7"
 jetty="11.0.11"
 spotless="6.8.0"
 shadow="7.1.2"
+brigadier="1.0.18"
 
 [libraries]
 bouncyCastle = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncyCastle" }
+brigadier= { module = "com.mojang:brigadier", version.ref = "brigadier" }
 
 # Logger
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
