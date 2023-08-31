@@ -340,7 +340,7 @@ public class Console {
 				while ((read = reader.read(buf, total, buf.length - total)) >= 0) {
 					total += read;
 					if (buf[read - 1] == '\n') {
-						char[] tmp = Arrays.copyOf(buf, total);
+						char[] tmp = Arrays.copyOf(buf, total - 1);
 						Arrays.fill(buf, '\u0000');
 						return tmp;
 					}
