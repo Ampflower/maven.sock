@@ -55,9 +55,10 @@ public final class Argon2 {
 	 *         password and secret, false otherwise.
 	 */
 	public static boolean verify(String input, byte[] password, byte[] secret) {
-		byte[] intermediate = new byte[32], output = new byte[32];
-		execute(decode(input, intermediate, secret), password, output);
-		return Arrays.constantTimeAreEqual(32, intermediate, 0, output, 0);
+		final var decoded = decode(input, secret);
+		byte[] intermediate = decoded.hash, output = new byte[intermediate.length];
+		execute(decoded.parameters, password, output);
+		return Arrays.constantTimeAreEqual(intermediate, output);
 	}
 
 	/**
@@ -78,12 +79,10 @@ public final class Argon2 {
 	 * secret.
 	 *
 	 * @param input  The Argon2-compliant string to decode.
-	 * @param hash   The byte array to outputt the hash to. <em>Should match the
-	 *               original hash length.</em> If unsure, use 32.
 	 * @param secret The secret to inject into the parameters.
 	 * @return The parameters as decoded from the original input string.
 	 */
-	static Argon2Parameters decode(String input, byte[] hash, byte[] secret) {
+	static Argon2Decoded decode(String input, byte[] secret) {
 		try {
 			if (!input.startsWith("$argon2"))
 				throw new IllegalArgumentException("Invalid hash.");
@@ -103,9 +102,8 @@ public final class Argon2 {
 			last = input.indexOf('$', last + 4);
 			if (last != -1)
 				params.withSalt(DECODER.decode(input.substring(saltStart, last)));
-			if (hash != null)
-				System.arraycopy(DECODER.decode(input.substring(Math.max(saltStart, last))), 0, hash, 0, 32);
-			return params.build();
+			var hash = DECODER.decode(input.substring(Math.max(saltStart, last)));
+			return new Argon2Decoded(params.build(), hash);
 		} catch (Exception e) {
 			throw new RuntimeException(input, e);
 		}
@@ -160,5 +158,8 @@ public final class Argon2 {
 		builder.withSalt(salt);
 		Arrays.clear(salt);
 		return builder.build();
+	}
+
+	record Argon2Decoded(Argon2Parameters parameters, byte[] hash) {
 	}
 }
