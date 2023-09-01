@@ -55,7 +55,19 @@ public final class Argon2 {
 	 *         password and secret, false otherwise.
 	 */
 	public static boolean verify(String input, byte[] password, byte[] secret) {
-		final var decoded = decode(input, secret);
+		return verify(decode(input, secret), password);
+	}
+
+	/**
+	 * Verifies the password with the given decoded hash.
+	 *
+	 * @param decoded  The decoded hash.
+	 * @param password The password to verify.
+	 * @return true if the decoded Argon2 hash was reproduced using the given
+	 *         password, false otherwise.
+	 * @see #verify(String, byte[], byte[])
+	 */
+	static boolean verify(Argon2Decoded decoded, byte[] password) {
 		byte[] intermediate = decoded.hash, output = new byte[intermediate.length];
 		execute(decoded.parameters, password, output);
 		return Arrays.constantTimeAreEqual(intermediate, output);

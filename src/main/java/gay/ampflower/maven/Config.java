@@ -215,7 +215,7 @@ public class Config {
 		if (auth != null) {
 			var hash = auth.users.get(user);
 			if (hash != null) {
-				return Argon2.verify(hash, password, auth.secret);
+				return Passwd.verify(hash, password, auth.secret);
 			}
 		}
 		return false;
