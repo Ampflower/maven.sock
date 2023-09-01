@@ -45,7 +45,7 @@ public class Config {
 			var path = host.getValue().path;
 			if (path == null) {
 				logger.warn("No directory specified for {}", host.getKey());
-			} else {
+			} else if (!Files.isDirectory(path)) {
 				Files.createDirectories(path);
 			}
 		}
