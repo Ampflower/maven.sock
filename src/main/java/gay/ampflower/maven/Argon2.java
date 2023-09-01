@@ -87,7 +87,7 @@ public final class Argon2 {
 	}
 
 	/**
-	 * Decodes an Argon2-complaint string to the base parameterts, and injects the
+	 * Decodes an Argon2-complaint string to the base parameters and injects the
 	 * secret.
 	 *
 	 * @param input  The Argon2-compliant string to decode.
