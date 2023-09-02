@@ -8,7 +8,6 @@ package gay.ampflower.maven;// Created 2022-02-02T21:46:08
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.bouncycastle.util.Arrays;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -140,30 +139,15 @@ public class Maven extends AbstractHandler {
 			response.getWriter().println("Unacceptable Authorization Method");
 			return;
 		}
-		// A MIME decoder can decode regular and URL base64.
-		var rawAuthorization = Utils.DECODER.decode(authorization.substring(6));
-		int i = 0;
-		int l = rawAuthorization.length;
-		while (i < l && rawAuthorization[i] != ':') {
-			i++;
-		}
-		var username = new String(rawAuthorization, 0, i);
-		byte[] password = Arrays.copyOfRange(rawAuthorization, i + 1, rawAuthorization.length);
 
-		if (!config.authorized(host, username, password)) {
-			denyObject(authorization);
-			Arrays.clear(rawAuthorization);
-			Arrays.clear(password);
+		if (!Passwd.authorized(config, host, authorization, taint)) {
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			response.getWriter().println("Invalid credentials.");
 			return;
 		}
-		Arrays.clear(rawAuthorization);
-		Arrays.clear(password);
 		if (taint) {
 			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			response.getWriter().println("Use HTTPS next time. Password invalidated, contact sysadmin.");
-			config.taint(host, username);
 			return;
 		}
 		var path = maven.resolve('.' + target);
