@@ -59,7 +59,7 @@ public final class Utils {
 	 * Safe writing options for writing a store.
 	 */
 	static final Set<OpenOption> SAFE_WRITE_OPTIONS = Set.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE,
-			StandardOpenOption.SYNC);
+			StandardOpenOption.SYNC, StandardOpenOption.TRUNCATE_EXISTING);
 
 	static {
 		// Pre-initialise it.
