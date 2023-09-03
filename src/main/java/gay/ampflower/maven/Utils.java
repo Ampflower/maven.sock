@@ -31,6 +31,8 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * @author Ampflower
@@ -60,6 +62,8 @@ public final class Utils {
 	 */
 	static final Set<OpenOption> SAFE_WRITE_OPTIONS = Set.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE,
 			StandardOpenOption.SYNC, StandardOpenOption.TRUNCATE_EXISTING);
+
+	static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
 	static {
 		// Pre-initialise it.

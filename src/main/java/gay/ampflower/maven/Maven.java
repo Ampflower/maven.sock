@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.TimeUnit;
 
 import static gay.ampflower.maven.Utils.getStrongRandom;
 
@@ -56,6 +57,10 @@ public class Maven extends AbstractHandler {
 		// original data in a way where it's
 		// difficult to recover.
 		getStrongRandom().nextBytes(nonce);
+
+		// Renews the nonce hourly. Yes, this operation is not atomic, although frankly,
+		// there's no reason for it to be.
+		Utils.scheduler.scheduleWithFixedDelay(() -> getStrongRandom().nextBytes(nonce), 1, 1, TimeUnit.HOURS);
 
 		logger.info("Reading config...");
 		var config = new Config(Path.of("."));

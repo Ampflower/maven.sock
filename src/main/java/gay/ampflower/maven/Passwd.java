@@ -12,6 +12,7 @@ import org.bouncycastle.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Ampflower
@@ -23,6 +24,10 @@ public final class Passwd {
 	private static final ResourceLimiter limiter = new ResourceLimiter(Runtime.getRuntime().maxMemory() - M8, M8 + K8);
 
 	private static final ConcurrentMap<String, CompletableFuture<Boolean>> map = new ConcurrentHashMap<>();
+
+	static {
+		Utils.scheduler.scheduleWithFixedDelay(map::clear, 30, 30, TimeUnit.SECONDS);
+	}
 
 	public static boolean authorized(Config config, String host, String authorization, boolean taint) {
 		// A MIME decoder can decode regular and URL base64.
