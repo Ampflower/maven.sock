@@ -1,13 +1,12 @@
 # maven.sock
 
-[![Actions](https://github.com/the-glitch-network/maven.sock/actions/workflows/build.yml/badge.svg)](https://github.com/the-glitch-network/maven.sock/actions/workflows/build.yml)
-[![License](https://img.shields.io/github/license/the-glitch-network/maven.sock)](LICENSE)
+[![Actions](https://github.com/Ampflower/maven.sock/actions/workflows/build.yml/badge.svg)](https://github.com/Ampflower/maven.sock/actions/workflows/build.yml)
+[![License](https://img.shields.io/github/license/Ampflower/maven.sock)](LICENSE)
 <br/>
-[![Stable](https://img.shields.io/github/v/release/the-glitch-network/maven.sock?label=stable)](https://github.com/the-glitch-network/maven.sock/releases)
-[![Beta](https://img.shields.io/github/v/release/the-glitch-network/maven.sock?include_prereleases&label=beta)](https://github.com/the-glitch-network/maven.sock/releases)
+[![Stable](https://img.shields.io/github/v/release/Ampflower/maven.sock?label=stable)](https://github.com/Ampflower/maven.sock/releases)
+[![Beta](https://img.shields.io/github/v/release/Ampflower/maven.sock?include_prereleases&label=beta)](https://github.com/Ampflower/maven.sock/releases)
 <br/>
 [![Discord](https://img.shields.io/discord/380201541078089738?color=7289da&label=Development&logo=discord&logoColor=7289da)](https://discord.gg/EmPS9y9)
-[![Discord](https://img.shields.io/discord/368932049354227712?color=7289da&label=Community&logo=discord&logoColor=7289da)](https://discord.gg/ExCdXwP)
 
 A small Maven upload backend over a UNIX socket, meant for use with reverse proxies such as Caddy.
 
@@ -15,7 +14,7 @@ A small Maven upload backend over a UNIX socket, meant for use with reverse prox
 
 0. Be sure you're on a system that supports unix sockets. Required for as that's the only method of connecting to the
    server.
-1. [Grab the latest stable release available](https://github.com/the-glitch-network/maven.sock/releases).
+1. [Grab the latest stable release available](https://github.com/Ampflower/maven.sock/releases).
 2. Grab Java 17 from either your vendor or [Adoptium](https://adoptium.net).
 3. Create the Maven repository folder you want to use.
 4. Create a user by running the server with `java -jar maven.sock-0.0.0-all.jar username` in a console.
