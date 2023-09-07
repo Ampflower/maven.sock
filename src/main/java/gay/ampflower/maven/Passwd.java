@@ -27,13 +27,13 @@ public final class Passwd {
 
 	private static final ResourceLimiter limiter = new ResourceLimiter(Runtime.getRuntime().maxMemory() - M8, M8 + K8);
 
-	private static final ConcurrentMap<String, Carrier> map = new ConcurrentHashMap<>();
+	private static final ConcurrentMap<Sha256Hash, Carrier> map = new ConcurrentHashMap<>();
 
 	static {
 		Utils.scheduler.scheduleWithFixedDelay(map::clear, 30, 30, TimeUnit.SECONDS);
 	}
 
-	public static boolean authorized(Config config, String host, String authorization, boolean taint)
+	public static boolean authorized(Config config, String host, String authorization, byte[] nonce, boolean taint)
 			throws InterruptedException {
 		// A MIME decoder can decode regular and URL base64.
 		var rawAuthorization = Utils.DECODER.decode(authorization.substring(6));
@@ -47,7 +47,9 @@ public final class Passwd {
 
 		boolean flag;
 
-		final var either = tryLease(authorization);
+		var hash = config.authHashKey(host, username, password, nonce);
+
+		final var either = tryLease(hash);
 		if (either.a != null) {
 			flag = either.a.value(taint);
 		} else {
@@ -76,7 +78,7 @@ public final class Passwd {
 		}
 	}
 
-	private static Either<Carrier, Carrier> tryLease(String key) {
+	private static Either<Carrier, Carrier> tryLease(Sha256Hash key) {
 		final var current = map.get(key);
 		if (current != null) {
 			return Either.a(current);

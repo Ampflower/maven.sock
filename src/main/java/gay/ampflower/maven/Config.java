@@ -10,11 +10,15 @@ import org.bouncycastle.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -176,10 +180,7 @@ public class Config {
 	 * @return The path of the maven corresponding to the domain, if any.
 	 */
 	public Path location(String host) {
-		var conf = hosts.get(host);
-		if (conf == null) {
-			conf = hosts.get(null);
-		}
+		var conf = host(host);
 		return conf.path;
 	}
 
@@ -207,18 +208,57 @@ public class Config {
 		auth.users.put(user, hash);
 	}
 
-	public boolean authorized(String host, String user, byte[] password) {
+	private Host host(String host) {
 		var auth = hosts.get(host);
-		if (auth == null) {
-			auth = hosts.get(null);
-		}
 		if (auth != null) {
-			var hash = auth.users.get(user);
-			if (hash != null) {
-				return Passwd.verify(hash, password, auth.secret);
-			}
+			return auth;
 		}
-		return false;
+		return hosts.get(null);
+	}
+
+	public boolean authorized(String host, String user, byte[] password) {
+		var auth = host(host);
+		if (auth == null) {
+			return false;
+		}
+		var hash = auth.users.get(user);
+		if (hash == null) {
+			return false;
+		}
+		return Passwd.verify(hash, password, auth.secret);
+	}
+
+	public Sha256Hash authHashKey(String host, String user, byte[] password, byte[] nonce) {
+		var auth = host(host);
+		if (auth == null) {
+			return null;
+		}
+
+		var hash = auth.users.get(user);
+		if (hash == null) {
+			return null;
+		}
+
+		try {
+			final var key = new SecretKeySpec(auth.secret, "RAW");
+			final var mac = Mac.getInstance("HmacSHA256");
+			mac.init(key);
+			var a = host.getBytes(StandardCharsets.UTF_8);
+			var b = user.getBytes(StandardCharsets.UTF_8);
+			var c = hash.getBytes(StandardCharsets.UTF_8);
+			mac.update(password);
+			mac.update(a);
+			mac.update(b);
+			mac.update(c);
+			mac.update(nonce);
+			var d = mac.doFinal();
+			Arrays.clear(a);
+			Arrays.clear(b);
+			Arrays.clear(c);
+			return new Sha256Hash(d);
+		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	public int taint(String host, String user) {
