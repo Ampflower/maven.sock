@@ -145,10 +145,14 @@ public class Maven extends AbstractHandler {
 			return;
 		}
 
-		if (!Passwd.authorized(config, host, authorization, taint)) {
-			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-			response.getWriter().println("Invalid credentials.");
-			return;
+		try {
+			if (!Passwd.authorized(config, host, authorization, taint)) {
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				response.getWriter().println("Invalid credentials.");
+				return;
+			}
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		}
 		if (taint) {
 			response.setStatus(HttpServletResponse.SC_FORBIDDEN);

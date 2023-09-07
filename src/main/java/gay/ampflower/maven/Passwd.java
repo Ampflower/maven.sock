@@ -9,10 +9,14 @@ package gay.ampflower.maven;
 import gay.ampflower.maven.concurrent.ResourceLimiter;
 import org.bouncycastle.util.Arrays;
 
-import java.util.concurrent.CompletableFuture;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * @author Ampflower
@@ -23,13 +27,14 @@ public final class Passwd {
 
 	private static final ResourceLimiter limiter = new ResourceLimiter(Runtime.getRuntime().maxMemory() - M8, M8 + K8);
 
-	private static final ConcurrentMap<String, CompletableFuture<Boolean>> map = new ConcurrentHashMap<>();
+	private static final ConcurrentMap<String, Carrier> map = new ConcurrentHashMap<>();
 
 	static {
 		Utils.scheduler.scheduleWithFixedDelay(map::clear, 30, 30, TimeUnit.SECONDS);
 	}
 
-	public static boolean authorized(Config config, String host, String authorization, boolean taint) {
+	public static boolean authorized(Config config, String host, String authorization, boolean taint)
+			throws InterruptedException {
 		// A MIME decoder can decode regular and URL base64.
 		var rawAuthorization = Utils.DECODER.decode(authorization.substring(6));
 		int i = 0;
@@ -44,13 +49,9 @@ public final class Passwd {
 
 		final var either = tryLease(authorization);
 		if (either.a != null) {
-			flag = either.a.join();
-			if (flag & taint) {
-				either.a.obtrudeValue(false);
-			}
+			flag = either.a.value(taint);
 		} else {
-			flag = config.authorized(host, username, password);
-			either.b.complete(flag ^ taint);
+			flag = either.b.complete(config.authorized(host, username, password), taint);
 		}
 
 		Arrays.clear(rawAuthorization);
@@ -75,13 +76,13 @@ public final class Passwd {
 		}
 	}
 
-	private static Either<CompletableFuture<Boolean>, CompletableFuture<Boolean>> tryLease(String key) {
+	private static Either<Carrier, Carrier> tryLease(String key) {
 		final var current = map.get(key);
 		if (current != null) {
 			return Either.a(current);
 		}
 
-		final var trial = new CompletableFuture<Boolean>();
+		final var trial = new Carrier();
 
 		final var old = map.putIfAbsent(key, trial);
 
@@ -99,6 +100,73 @@ public final class Passwd {
 
 		static <A, B> Either<A, B> b(B b) {
 			return new Either<>(null, b);
+		}
+	}
+
+	private static class Carrier {
+		private volatile boolean taint;
+		private boolean success;
+		private volatile Queue<Thread> threadQueue;
+
+		private static final VarHandle threadQueueHandle;
+
+		static {
+			try {
+				final var lookup = MethodHandles.lookup();
+				threadQueueHandle = lookup.findVarHandle(Carrier.class, "threadQueue", Queue.class);
+			} catch (ReflectiveOperationException e) {
+				throw new ExceptionInInitializerError(e);
+			}
+		}
+
+		{
+			// Relaxed set as publishing is when being stored in a hashmap.
+			threadQueueHandle.set(this, new LinkedBlockingQueue<Thread>());
+		}
+
+		boolean value(boolean taint) throws InterruptedException {
+			taint(taint);
+
+			final var queue = threadQueue;
+			if (queue != null) {
+				queue.add(Thread.currentThread());
+				hold();
+			}
+
+			return this.success;
+		}
+
+		void taint(boolean taint) {
+			if (taint) {
+				this.taint = true;
+				this.success = false;
+			}
+		}
+
+		boolean complete(boolean success, boolean taint) {
+			taint(taint);
+			final var queue = this.threadQueue;
+
+			if (queue == null) {
+				throw new IllegalStateException("completed already, race condition? v=" + this.success);
+			}
+
+			this.success = success &= !this.taint;
+
+			this.threadQueue = null;
+			queue.forEach(LockSupport::unpark);
+
+			return success;
+		}
+
+		private void hold() throws InterruptedException {
+			while (this.threadQueue != null) {
+				LockSupport.park(this);
+
+				if (Thread.interrupted()) {
+					throw new InterruptedException();
+				}
+			}
 		}
 	}
 }
