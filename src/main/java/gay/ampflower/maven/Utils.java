@@ -33,6 +33,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Ampflower
@@ -63,7 +65,16 @@ public final class Utils {
 	static final Set<OpenOption> SAFE_WRITE_OPTIONS = Set.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE,
 			StandardOpenOption.SYNC, StandardOpenOption.TRUNCATE_EXISTING);
 
-	static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+	static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+		private final AtomicInteger counter = new AtomicInteger();
+
+		@Override
+		public Thread newThread(final Runnable r) {
+			final var thread = new Thread(r, "scheduler daemon " + counter.incrementAndGet());
+			thread.setDaemon(true);
+			return thread;
+		}
+	});
 
 	static {
 		// Pre-initialise it.
