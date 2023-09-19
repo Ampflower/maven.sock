@@ -27,10 +27,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -99,6 +96,15 @@ public final class Utils {
 				return true;
 		}
 		return false;
+	}
+
+	public static String toString(Enumeration<?> enumeration) {
+		var builder = new StringBuilder();
+		while (enumeration.hasMoreElements()) {
+			builder.append(enumeration.nextElement()).append(", ");
+		}
+
+		return builder.toString();
 	}
 
 	/**

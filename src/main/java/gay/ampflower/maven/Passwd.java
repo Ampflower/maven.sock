@@ -33,8 +33,11 @@ public final class Passwd {
 		Utils.scheduler.scheduleWithFixedDelay(map::clear, 30, 30, TimeUnit.SECONDS);
 	}
 
-	public static boolean authorized(Config config, String host, String authorization, byte[] nonce, boolean taint)
-			throws InterruptedException {
+	public static User user(String authorization) {
+		if (authorization == null || !authorization.startsWith("Basic ")) {
+			return null;
+		}
+
 		// A MIME decoder can decode regular and URL base64.
 		var rawAuthorization = Utils.DECODER.decode(authorization.substring(6));
 		int i = 0;
@@ -44,7 +47,14 @@ public final class Passwd {
 		}
 		var username = new String(rawAuthorization, 0, i);
 		byte[] password = Arrays.copyOfRange(rawAuthorization, i + 1, rawAuthorization.length);
+		Arrays.clear(rawAuthorization);
+		return new User(username, password);
+	}
 
+	public static boolean authorized(Config config, String host, User user, byte[] nonce, boolean taint)
+			throws InterruptedException {
+		var username = user.username();
+		var password = user.password();
 		boolean flag;
 
 		var hash = config.authHashKey(host, username, password, nonce);
@@ -56,7 +66,6 @@ public final class Passwd {
 			flag = either.b.complete(config.authorized(host, username, password), taint);
 		}
 
-		Arrays.clear(rawAuthorization);
 		Arrays.clear(password);
 
 		if (flag && taint) {
@@ -75,6 +84,18 @@ public final class Passwd {
 			throw new RuntimeException(interruptedException);
 		} finally {
 			limiter.release();
+		}
+	}
+
+	public record User(String username, byte[] password) implements AutoCloseable {
+		// #close() is only used to have the IDE nag if you don't "close" the record.
+		public void close() {
+			Arrays.clear(password);
+		}
+
+		@Override
+		public String toString() {
+			return username + ":???";
 		}
 	}
 

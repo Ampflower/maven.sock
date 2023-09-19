@@ -108,22 +108,71 @@ public class Maven extends AbstractHandler {
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
 			throws IOException {
+		var host = request.getHeader("Host");
+		var maven = config.location(host);
+		var user = Passwd.user(request.getHeader("Authorization"));
+
+		logger.info("request: {} {}@{}{} from {}:{} ({}), real: {}, cf: {} / {}, agent: {}", request.getMethod(), user,
+				host, target, request.getRemoteAddr(), request.getRemotePort(), request.getRemoteHost(),
+				Utils.toString(request.getHeaders("X-Fowarded-For")), request.getHeader("CF-Connecting-IP"),
+				request.getHeader("True-Client-IP"), request.getHeader("User-Agent"));
+
+		// CF-Connecting-IP and X-Forwarded-For :blobfox_3c:
+		if (!checkPreconditions(user, baseRequest, request, response)) {
+			logger.info("invalid: {} {}@{}{} from {}:{} ({})", request.getMethod(), user, host, target,
+					request.getRemoteAddr(), request.getRemotePort(), request.getRemoteHost());
+			user.close();
+			return;
+		}
+
+		logger.info("authenticated: {} {}@{}{} from {}:{} ({})", request.getMethod(), user, host, target,
+				request.getRemoteAddr(), request.getRemotePort(), request.getRemoteHost());
+
+		var path = maven.resolve('.' + target);
+		if (Files.exists(path) && !target.contains("SNAPSHOT")
+				&& !target.regionMatches(target.lastIndexOf('/') + 1, "maven-metadata", 0, 14)) {
+			response.setStatus(HttpServletResponse.SC_CONFLICT);
+			response.getWriter().println("File cannot be replaced or deleted once uploaded.");
+
+			logger.info("attempted replacing: {} {}@{}{}", request.getMethod(), user, host, target);
+			return;
+		}
+		var parent = path.getParent();
+		if (Files.exists(parent) && !Files.isDirectory(parent)) {
+			response.setStatus(HttpServletResponse.SC_CONFLICT);
+			response.getWriter().println("Package is a file.");
+
+			logger.info("package is a file: {} {}@{}{}", request.getMethod(), user, host, target);
+			return;
+		}
+
+		Files.createDirectories(parent);
+		try (var srvIn = request.getInputStream()) {
+			Files.copy(srvIn, path, StandardCopyOption.REPLACE_EXISTING);
+		}
+
+		logger.info("successful upload: {} {}@{}{}", request.getMethod(), user, host, target);
+		response.setStatus(HttpServletResponse.SC_CREATED);
+	}
+
+	private boolean checkPreconditions(Passwd.User user, Request baseRequest, HttpServletRequest request,
+									   HttpServletResponse response) throws IOException {
 		boolean taint = "http".equals(request.getHeader("X-Forwarded-Proto"));
 		// No point in executing on any other.
 		baseRequest.setHandled(true);
 		if (!"PUT".equalsIgnoreCase(request.getMethod())) {
 			response.setStatus(HttpServletResponse.SC_NOT_IMPLEMENTED);
-			return;
+			return false;
 		}
 		int contentLength = request.getContentLength();
 		// Ignore any upload that is too small or is too large (24M)
 		if (contentLength < 0) {
 			response.setStatus(HttpServletResponse.SC_LENGTH_REQUIRED);
-			return;
+			return false;
 		}
 		if (contentLength > 1024 * 1024 * 24) {
 			response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
-			return;
+			return false;
 		}
 
 		var host = request.getHeader("Host");
@@ -131,25 +180,24 @@ public class Maven extends AbstractHandler {
 		// Check to see if the host is valid.
 		if (maven == null) {
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			return;
+			return false;
 		}
 		// Check to see if the IP was banned from uploading.
 		// if(checkObject(baseRequest.getRemoteInetSocketAddress().getAddress())) {
 		// response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 		// return;
 		// }
-		var authorization = request.getHeader("Authorization");
-		if (authorization == null || !authorization.startsWith("Basic ") || checkObject(authorization)) {
+		if (checkObject(request.getHeader("Authorization"))) {
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			response.getWriter().println("Unacceptable Authorization Method");
-			return;
+			return false;
 		}
 
 		try {
-			if (!Passwd.authorized(config, host, authorization, nonce, taint)) {
+			if (!Passwd.authorized(config, host, user, nonce, taint)) {
 				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 				response.getWriter().println("Invalid credentials.");
-				return;
+				return false;
 			}
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
@@ -157,26 +205,10 @@ public class Maven extends AbstractHandler {
 		if (taint) {
 			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			response.getWriter().println("Use HTTPS next time. Password invalidated, contact sysadmin.");
-			return;
+			return false;
 		}
-		var path = maven.resolve('.' + target);
-		if (Files.exists(path) && !target.contains("SNAPSHOT")
-				&& !target.regionMatches(target.lastIndexOf('/') + 1, "maven-metadata", 0, 14)) {
-			response.setStatus(HttpServletResponse.SC_CONFLICT);
-			response.getWriter().println("File cannot be replaced or deleted once uploaded.");
-			return;
-		}
-		var parent = path.getParent();
-		if (Files.exists(parent) && !Files.isDirectory(parent)) {
-			response.setStatus(HttpServletResponse.SC_CONFLICT);
-			response.getWriter().println("Package is a file.");
-			return;
-		}
-		Files.createDirectories(parent);
-		try (var srvIn = request.getInputStream()) {
-			Files.copy(srvIn, path, StandardCopyOption.REPLACE_EXISTING);
-		}
-		response.setStatus(HttpServletResponse.SC_CREATED);
+
+		return true;
 	}
 
 	/**
