@@ -164,7 +164,7 @@ public class Console {
 
 					return Command.SINGLE_SUCCESS;
 				})))).then(literal("remove").then(argument("name", string()).executes(ctx -> {
-					var name = getString(ctx, "name");
+					var name = host(ctx, "name");
 					if (ctx.getSource().config.deleteHost(name)) {
 						logger.info("Deleted {}", name);
 						return Command.SINGLE_SUCCESS;
@@ -212,7 +212,7 @@ public class Console {
 							return Command.SINGLE_SUCCESS;
 						}))))
 				.then(literal("set").then(argument("host", greedyString()).executes(ctx -> {
-					ctx.getSource().host = getString(ctx, "host");
+					ctx.getSource().host = host(ctx, "host");
 
 					return Command.SINGLE_SUCCESS;
 				}))).then(literal("list").executes(ctx -> {
