@@ -169,11 +169,15 @@ public class Config {
 		if (!set.contains(".") && Files.notExists(config)) {
 			if (!hosts.containsKey(null)) {
 				var legacy = Utils.readLegacy(cwd);
-				legacy.path = Path.of(Objects.requireNonNullElse(System.getenv("maven"), "./maven/"));
-				hosts.put(null, legacy);
+				if (legacy != null) {
+					legacy.path = Path.of(Objects.requireNonNullElse(System.getenv("maven"), "./maven/"));
+					hosts.put(null, legacy);
+				}
 			}
-			var usersOld = cwd.resolve(".users." + System.nanoTime() + ".old");
-			Files.move(users, usersOld);
+			if (Files.exists(users)) {
+				var usersOld = cwd.resolve(".users." + System.nanoTime() + ".old");
+				Files.move(users, usersOld);
+			}
 		}
 	}
 

@@ -175,7 +175,13 @@ public class Console {
 				}))).then(literal("import").then(literal("legacy").then(argument("name", string())
 						.then(argument("maven", string()).then(argument("config", greedyString()).executes(ctx -> {
 							try {
-								var host = Utils.readLegacy(path(ctx, "config"));
+								var config = path(ctx, "config");
+								logger.info("Reading {}", config);
+								var host = Utils.readLegacy(config);
+								if (host == null) {
+									logger.warn("Not data found: {}", config);
+									return 0;
+								}
 								host.path = path(ctx, "maven");
 								ctx.getSource().config.importRaw(host(ctx, "name"), host);
 							} catch (IOException e) {
@@ -184,7 +190,8 @@ public class Console {
 
 							return Command.SINGLE_SUCCESS;
 						}))))).then(literal("modern").then(argument("path", greedyString()).executes(ctx -> {
-							var path = Path.of(getString(ctx, "path"));
+							var path = path(ctx, "path");
+							logger.info("Reading {}", path);
 
 							var configIn = new Config(path);
 

@@ -152,9 +152,16 @@ public final class Utils {
 		final var usersTable = old.resolve(".users");
 		logger.debug("secretPath: {}", secretPath.normalize());
 		logger.debug("usersTable: {}", usersTable.normalize());
+
+		final boolean secretExists = Files.exists(secretPath);
+		final boolean usersExists = Files.exists(usersTable);
+
+		if (!secretExists && !usersExists) {
+			return null;
+		}
 		// Reads or creates a secret for use with password hashing.
 		final byte[] $secret;
-		if (Files.exists(secretPath)) {
+		if (secretExists) {
 			$secret = Files.readAllBytes(secretPath);
 			logger.debug("Read secret");
 		} else {
@@ -163,7 +170,7 @@ public final class Utils {
 		}
 		// Initialises the users map.
 		final var $users = new HashMap<String, String>();
-		if (Files.exists(usersTable)) {
+		if (usersExists) {
 			logger.debug("Reading {}", usersTable);
 			try (final var reader = Utils.lineNumberReader(usersTable)) {
 				Ini.read(reader, (section, key, value) -> {
