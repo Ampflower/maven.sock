@@ -172,6 +172,18 @@ public class Console {
 						logger.info("No such host.");
 						return 0;
 					}
+				}))).then(literal("rename").then(argument("name", string()).executes(ctx -> {
+					var name = host(ctx, "name");
+					var old = ctx.getSource().host;
+
+					if (ctx.getSource().config.renameHost(old, name)) {
+						ctx.getSource().host = name;
+						logger.info("Renamed {} to {}", old, name);
+						return Command.SINGLE_SUCCESS;
+					} else {
+						logger.info("Either {} doesn't exist or {} already exists", old, name);
+						return 0;
+					}
 				}))).then(literal("import").then(literal("legacy").then(argument("name", string())
 						.then(argument("maven", string()).then(argument("config", greedyString()).executes(ctx -> {
 							try {

@@ -194,6 +194,21 @@ public class Config {
 		hosts.put(host, new Host(path));
 	}
 
+	public boolean renameHost(String host, String name) {
+		if (hosts.containsKey(name)) {
+			return false;
+		}
+
+		var renamed = hosts.remove(host);
+		if (renamed == null) {
+			return false;
+		}
+
+		hosts.put(name, renamed);
+
+		return true;
+	}
+
 	public boolean deleteHost(String host) {
 		return hosts.remove(host) != null;
 	}
