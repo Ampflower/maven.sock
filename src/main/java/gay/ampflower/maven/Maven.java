@@ -156,7 +156,7 @@ public class Maven extends AbstractHandler {
 	}
 
 	private boolean checkPreconditions(Passwd.User user, Request baseRequest, HttpServletRequest request,
-									   HttpServletResponse response) throws IOException {
+			HttpServletResponse response) throws IOException {
 		boolean taint = "http".equals(request.getHeader("X-Forwarded-Proto"));
 		// No point in executing on any other.
 		baseRequest.setHandled(true);
