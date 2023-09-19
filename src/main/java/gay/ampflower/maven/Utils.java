@@ -150,12 +150,16 @@ public final class Utils {
 	public static Config.Host readLegacy(Path old) throws IOException {
 		final var secretPath = old.resolve(".secret");
 		final var usersTable = old.resolve(".users");
+		logger.debug("secretPath: {}", secretPath.normalize());
+		logger.debug("usersTable: {}", usersTable.normalize());
 		// Reads or creates a secret for use with password hashing.
 		final byte[] $secret;
 		if (Files.exists(secretPath)) {
 			$secret = Files.readAllBytes(secretPath);
+			logger.debug("Read secret");
 		} else {
 			$secret = createSecret();
+			logger.debug("Created secret");
 		}
 		// Initialises the users map.
 		final var $users = new HashMap<String, String>();
