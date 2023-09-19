@@ -78,7 +78,8 @@ public class Config {
 				if ("*".equals(key)) {
 					key = null;
 				}
-				hosts.put(key, new Host(Utils.DECODER.decode(value), authMap.get(key)));
+				final var map = authMap.computeIfAbsent(key, ($) -> new HashMap<>());
+				hosts.put(key, new Host(Utils.DECODER.decode(value), map));
 			});
 		}
 
