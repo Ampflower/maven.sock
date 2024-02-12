@@ -29,7 +29,7 @@ A small Maven upload backend over a UNIX socket, meant for use with reverse prox
     - For Caddy, an example configuration is to use...
       ```caddyfile
       # /etc/caddy/Caddyfile
-      maven.the-glitch.network {
+      maven.ampflower.gay {
          root * /var/www/maven
          file_server browse
          @put method PUT

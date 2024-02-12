@@ -42,7 +42,7 @@ maven.example.com=base64
 ; `maven.example.com` will take the data instead.
 ; If `.` is not present, `*` will be the default.
 maven.example.com=.
-maven.the-glitch.network=/var/maven/tgmvn
+maven.ampflower.gay=/var/maven/aflwr
 ```
 
 ### Legacy
